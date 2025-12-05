@@ -274,49 +274,101 @@ export default function Results() {
             <div className="flex-1 flex overflow-hidden">
                 {/* Left Panel - Media & Chapters */}
                 <div className="w-1/2 flex flex-col bg-gray-50 p-6 overflow-y-auto custom-scrollbar">
-                    {/* Video Player */}
-                    <div className="bg-black rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '16/9' }}>
+                    {/* Media Viewer */}
+                    <div className="bg-black rounded-lg overflow-hidden mb-4 flex-shrink-0" style={{ height: '400px' }}>
                         {renderMedia()}
                     </div>
 
                     {/* Chapters/Transcripts Section */}
                     <div className="bg-white rounded-lg border border-gray-200 flex-1">
-                        <div className="flex items-center border-b px-4 py-3">
-                            <button
-                                onClick={() => setShowChapters(true)}
-                                className={`px-3 py-1.5 text-sm font-medium rounded transition ${showChapters ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                                    Chapters
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setShowChapters(false)}
-                                className={`px-3 py-1.5 text-sm font-medium rounded transition ${!showChapters ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                            >
-                                Transcripts
-                            </button>
-                            <div className="ml-auto flex items-center gap-2">
+                        {/* Header - only show tabs for videos */}
+                        {mediaType === 'youtube' ? (
+                            <div className="flex items-center border-b px-4 py-3">
                                 <button
-                                    onClick={() => setAutoScroll(!autoScroll)}
-                                    className={`px-3 py-1.5 text-xs rounded-lg border transition flex items-center gap-1 ${autoScroll ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                    onClick={() => setShowChapters(true)}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded transition ${showChapters ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    <ChevronDown className="w-3 h-3" />
-                                    Auto Scroll
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                        Chapters
+                                    </div>
                                 </button>
-                                <button className="p-1.5 hover:bg-gray-100 rounded transition">
-                                    <ChevronDown className="w-4 h-4 text-gray-600" />
+                                <button
+                                    onClick={() => setShowChapters(false)}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded transition ${!showChapters ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                >
+                                    Transcripts
                                 </button>
+                                <div className="ml-auto flex items-center gap-2">
+                                    <button
+                                        onClick={() => setAutoScroll(!autoScroll)}
+                                        className={`px-3 py-1.5 text-xs rounded-lg border transition flex items-center gap-1 ${autoScroll ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <ChevronDown className="w-3 h-3" />
+                                        Auto Scroll
+                                    </button>
+                                    <button className="p-1.5 hover:bg-gray-100 rounded transition">
+                                        <ChevronDown className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="p-6 text-center text-gray-500">
-                            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm">Generating Chapters...</p>
-                        </div>
+                        ) : (
+                            <div className="flex items-center border-b px-4 py-3">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                    <span className="text-sm font-medium text-gray-900">Chapters</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Content */}
+                        {showChapters || mediaType !== 'youtube' ? (
+                            // Always show chapters for documents, or when chapters tab is active for videos
+                            data.chapters && data.chapters.length > 0 ? (
+                                <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar" style={{ maxHeight: '400px' }}>
+                                    {data.chapters.map((chapter: any, i: number) => (
+                                        <div
+                                            key={i}
+                                            className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition group"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                {chapter.timestamp && (
+                                                    <span className="text-xs font-mono text-emerald-600 font-semibold mt-0.5 min-w-[45px]">
+                                                        {chapter.timestamp}
+                                                    </span>
+                                                )}
+                                                {chapter.section && (
+                                                    <span className="text-xs font-semibold text-emerald-600 mt-0.5 min-w-[30px]">
+                                                        §{chapter.section}
+                                                    </span>
+                                                )}
+                                                <div className="flex-1">
+                                                    <h4 className="font-semibold text-sm text-gray-900 group-hover:text-emerald-600 transition">
+                                                        {chapter.title}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                        {chapter.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-6 text-center text-gray-500">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
+                                    <p className="text-sm">Generating Chapters...</p>
+                                </div>
+                            )
+                        ) : (
+                            // Transcripts tab (only for videos)
+                            <div className="p-6 text-center text-gray-500">
+                                <p className="text-sm">Transcripts coming soon...</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -380,8 +432,8 @@ export default function Results() {
                                         {chatHistory.map((msg, i) => (
                                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`max-w-[80%] p-3 rounded-lg text-sm ${msg.role === 'user'
-                                                        ? 'bg-emerald-500 text-white'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-emerald-500 text-white'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     <ReactMarkdown>{msg.text}</ReactMarkdown>
                                                 </div>

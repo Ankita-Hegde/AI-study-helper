@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { StudyData, QuizQuestion, StudyGuide } from "../types";
+import { StudyData, QuizQuestion, StudyGuide, Chapter } from "../types";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genai = new GoogleGenAI({ apiKey });
@@ -61,6 +61,26 @@ const studyGuideSchema = {
         guide: { type: Type.STRING },
     },
     required: ["guide"],
+};
+
+const chapterSchema = {
+    type: Type.OBJECT,
+    properties: {
+        chapters: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING },
+                    timestamp: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    section: { type: Type.NUMBER },
+                },
+                required: ["title", "description"],
+            },
+        },
+    },
+    required: ["chapters"],
 };
 
 const fetchVideoMetadata = async (url: string) => {
@@ -168,10 +188,15 @@ export const runFullPipeline = async (
         if (!synthesisData) throw new Error("No synthesis data generated");
         const parsedSynthesis = JSON.parse(synthesisData);
 
+        // Stage 3: Generate Chapters
+        const isVideo = mimeType === 'text/plain'; // YouTube URLs are videos
+        const chapters = await generateChapters(parsedAnalysis.summary, isVideo);
+
         return {
             notes: parsedAnalysis.summary + "\n\n### Key Points\n" + parsedAnalysis.keyPoints.map((p: string) => `- ${p}`).join("\n"),
             flashcards: parsedSynthesis.flashcards,
             quiz: parsedSynthesis.quiz,
+            chapters: chapters,
         };
 
     } catch (error) {
@@ -251,5 +276,55 @@ export const chatWithAI = async (context: string, history: { role: string, text:
     } catch (error) {
         console.error("Chat Error:", error);
         throw error;
+    }
+};
+
+export const generateChapters = async (
+    content: string,
+    isVideo: boolean
+): Promise<Chapter[]> => {
+    try {
+        const prompt = isVideo
+            ? `Analyze this video content and generate 5-8 chapters that represent major topic transitions.
+               For each chapter provide:
+               - title: Brief, descriptive title (3-6 words)
+               - timestamp: Estimated timestamp in MM:SS format (e.g., "00:00", "05:23", "12:45")
+               - description: 1-2 sentence summary of what's covered
+               
+               Start with timestamp "00:00" for the introduction/first chapter.
+               Distribute timestamps evenly based on typical video pacing.
+               
+               Content Summary: ${content}`
+            : `Analyze this document and generate 5-8 chapters that represent major sections or topics.
+               For each chapter provide:
+               - title: Brief, descriptive title (3-6 words)
+               - section: Section/page number (start from 1)
+               - description: 1-2 sentence summary of what's covered
+               
+               Document Summary: ${content}`;
+
+        const response = await genai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: prompt }],
+                },
+            ],
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: chapterSchema,
+            },
+        });
+
+        const data = response.text;
+        if (!data) throw new Error("No chapters generated");
+        const parsed = JSON.parse(data);
+        return parsed.chapters || [];
+
+    } catch (error) {
+        console.error("Chapter Generation Error:", error);
+        // Return empty array on error rather than failing the whole pipeline
+        return [];
     }
 };

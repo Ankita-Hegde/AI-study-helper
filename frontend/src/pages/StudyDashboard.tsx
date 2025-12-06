@@ -105,7 +105,7 @@ export default function StudyDashboard() {
                         <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                             {profile.topic}
                         </h1>
-                        <p className="text-xs text-indigo-600 font-medium bg-indigo-50 inline-block px-2 py-0.5 rounded mt-1">{profile.level} • {profile.area}</p>
+                        <p className="text-xs text-blue-600 font-medium bg-blue-50 inline-block px-2 py-0.5 rounded mt-1">{profile.level} • {profile.area}</p>
                     </div>
                 </div>
             </div>
@@ -152,7 +152,7 @@ export default function StudyDashboard() {
                     </div>
                 ) : loading && !studyPlan ? (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                        <Loader2 className="w-10 h-10 animate-spin mb-4 text-indigo-500" />
+                        <Loader2 className="w-10 h-10 animate-spin mb-4 text-blue-500" />
                         <p>Generating your personalized study plan...</p>
                     </div>
                 ) : (
@@ -161,19 +161,19 @@ export default function StudyDashboard() {
                         {/* PLAN TAB */}
                         {activeTab === 'plan' && studyPlan && (
                             <div className="space-y-6">
-                                <div className="bg-indigo-600 rounded-2xl p-8 text-white shadow-lg shadow-indigo-200">
+                                <div className="bg-blue-600 rounded-2xl p-8 text-white shadow-lg shadow-blue-200">
                                     <h2 className="text-2xl font-bold mb-2">Your 4-Week Roadmap</h2>
-                                    <p className="text-indigo-100 opacity-90">A structured path to master {studyPlan.topic}.</p>
+                                    <p className="text-blue-100 opacity-90">A structured path to master {studyPlan.topic}.</p>
                                 </div>
 
                                 <div className="grid gap-6">
                                     {studyPlan.roadmap.map((week, i) => (
                                         <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex gap-6">
                                             <div className="flex-shrink-0 flex flex-col items-center">
-                                                <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg">
+                                                <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
                                                     {week.week}
                                                 </div>
-                                                <div className="h-full w-0.5 bg-indigo-100 mt-4"></div>
+                                                <div className="h-full w-0.5 bg-blue-100 mt-4"></div>
                                             </div>
                                             <div className="flex-1 pb-6">
                                                 <h3 className="text-xl font-bold text-slate-800 mb-2">{week.title}</h3>
@@ -202,7 +202,7 @@ export default function StudyDashboard() {
                                                 <BookOpen className="w-5 h-5" />
                                             </div>
                                             {resource.url && (
-                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-600">
+                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-600">
                                                     <ExternalLink className="w-4 h-4" />
                                                 </a>
                                             )}
@@ -212,10 +212,10 @@ export default function StudyDashboard() {
                                         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{resource.type}</span>
                                     </div>
                                 ))}
-                                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                                    <GraduationCap className="w-8 h-8 text-indigo-500 mb-3" />
-                                    <h3 className="font-bold text-indigo-900 mb-1">Want more?</h3>
-                                    <p className="text-sm text-indigo-700">Use the AI Tutor tab to ask for specific articles or videos on any sub-topic.</p>
+                                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                                    <GraduationCap className="w-8 h-8 text-blue-500 mb-3" />
+                                    <h3 className="font-bold text-blue-900 mb-1">Want more?</h3>
+                                    <p className="text-sm text-blue-700">Use the AI Tutor tab to ask for specific articles or videos on any sub-topic.</p>
                                 </div>
                             </div>
                         )}
@@ -233,7 +233,7 @@ export default function StudyDashboard() {
                                         chatHistory.map((msg, i) => (
                                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${msg.role === 'user'
-                                                    ? 'bg-indigo-600 text-white rounded-br-none'
+                                                    ? 'bg-blue-600 text-white rounded-br-none'
                                                     : 'bg-slate-50 border border-slate-100 text-slate-700 rounded-bl-none'
                                                     }`}>
                                                     <ReactMarkdown>{msg.text}</ReactMarkdown>
@@ -244,7 +244,7 @@ export default function StudyDashboard() {
                                     {chatLoading && (
                                         <div className="flex justify-start">
                                             <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-bl-none shadow-sm">
-                                                <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
+                                                <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
                                             </div>
                                         </div>
                                     )}
@@ -257,12 +257,12 @@ export default function StudyDashboard() {
                                             value={chatInput}
                                             onChange={(e) => setChatInput(e.target.value)}
                                             placeholder="Ask a question..."
-                                            className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-12 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all shadow-sm"
+                                            className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-12 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                                         />
                                         <button
                                             type="submit"
                                             disabled={!chatInput.trim() || chatLoading}
-                                            className="absolute right-2 top-2 p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                            className="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                         >
                                             <Send className="w-4 h-4" />
                                         </button>

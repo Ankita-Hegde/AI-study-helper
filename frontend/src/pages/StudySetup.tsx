@@ -5,7 +5,7 @@ import { BookOpen, ArrowRight, GraduationCap, Globe, Cpu, Palette, FlaskConical,
 const AREAS = [
     { id: 'tech', name: 'Technology', icon: Cpu, color: 'text-blue-500', bg: 'bg-blue-50' },
     { id: 'science', name: 'Science', icon: FlaskConical, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { id: 'language', name: 'Language', icon: Globe, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { id: 'language', name: 'Language', icon: Globe, color: 'text-cyan-500', bg: 'bg-cyan-50' },
     { id: 'arts', name: 'Arts', icon: Palette, color: 'text-pink-500', bg: 'bg-pink-50' },
     { id: 'other', name: 'Other', icon: MoreHorizontal, color: 'text-slate-500', bg: 'bg-slate-50' },
 ];
@@ -69,16 +69,16 @@ export default function StudySetup() {
             <div className="relative z-10 bg-white max-w-2xl w-full rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row m-4">
 
                 {/* Left Side - Visual */}
-                <div className="md:w-2/5 bg-gradient-to-br from-indigo-600 to-purple-600 p-8 text-white flex flex-col justify-between relative overflow-hidden">
+                <div className="md:w-2/5 bg-gradient-to-br from-blue-600 to-cyan-600 p-8 text-white flex flex-col justify-between relative overflow-hidden">
                     <div className="relative z-10">
                         <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mb-6">
                             <GraduationCap className="w-6 h-6 text-white" />
                         </div>
                         <h2 className="text-3xl font-bold mb-2">Study Anything</h2>
-                        <p className="text-indigo-100 opacity-90">Get a personalized AI study plan for any topic you want to master.</p>
+                        <p className="text-blue-100 opacity-90">Get a personalized AI study plan for any topic you want to master.</p>
                     </div>
                     <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                    <div className="absolute top-10 -left-10 w-20 h-20 bg-purple-400/20 rounded-full blur-xl"></div>
+                    <div className="absolute top-10 -left-10 w-20 h-20 bg-cyan-400/20 rounded-full blur-xl"></div>
                 </div>
 
                 {/* Right Side - Form */}
@@ -96,7 +96,7 @@ export default function StudySetup() {
                                         onClick={() => handleAreaChange(a.id)}
                                         className={`flex items-center gap-2 p-2 rounded-lg border text-sm transition-all text-left
                                             ${area === a.id
-                                                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
                                                 : 'border-slate-200 hover:border-slate-300 text-slate-600'
                                             }`}
                                     >
@@ -117,7 +117,7 @@ export default function StudySetup() {
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
                                     placeholder="e.g. Quantum Physics, French History..."
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-slate-800 placeholder:text-slate-400"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-800 placeholder:text-slate-400"
                                 />
                             </div>
                         </div>
@@ -146,7 +146,7 @@ export default function StudySetup() {
                     <button
                         onClick={handleStart}
                         disabled={!area || !topic || !level}
-                        className="w-full mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full mt-8 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         <span>Start Studying</span>
                         <ArrowRight className="w-4 h-4" />

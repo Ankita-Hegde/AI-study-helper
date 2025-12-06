@@ -205,7 +205,7 @@ export default function Home() {
                     {/* Study Portal Card */}
                     <div
                         onClick={() => navigate('/study-setup')}
-                        className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-3xl shadow-xl border border-white/20 cursor-pointer group hover:scale-[1.02] transition-all relative overflow-hidden"
+                        className="mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-3xl shadow-xl border border-white/20 cursor-pointer group hover:scale-[1.02] transition-all relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
                         <div className="relative z-10 flex items-center justify-between">

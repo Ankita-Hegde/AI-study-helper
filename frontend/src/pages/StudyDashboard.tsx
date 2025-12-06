@@ -11,6 +11,7 @@ export default function StudyDashboard() {
 
     // Data States
     const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +33,16 @@ export default function StudyDashboard() {
     useEffect(() => {
         if (profile && !studyPlan) {
             loadStudyPlan();
+        }
+        // Load uploaded files from localStorage
+        const filesJson = localStorage.getItem('uploaded_files');
+        if (filesJson) {
+            try {
+                const parsed = JSON.parse(filesJson);
+                setUploadedFiles(parsed);
+            } catch (e) {
+                console.warn('Failed to parse uploaded_files', e);
+            }
         }
     }, [profile]);
 
@@ -195,6 +206,61 @@ export default function StudyDashboard() {
                         {/* MATERIALS TAB */}
                         {activeTab === 'materials' && studyPlan && (
                             <div className="grid md:grid-cols-2 gap-6">
+                                {uploadedFiles.length > 0 && (
+                                    <div className="col-span-full">
+                                        <h3 className="text-sm font-bold text-slate-600 mb-3">Uploaded Files</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            {uploadedFiles.map((f, idx) => (
+                                                <div key={f.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold ${f.mimeType?.startsWith('video') ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                            {f.name?.slice(-3).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-slate-800 truncate max-w-[280px]">{f.name}</div>
+                                                            <div className="text-xs text-slate-400">{(f.size/1024/1024).toFixed(2)} MB • {new Date(f.createdAt).toLocaleString()}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                // Open preview if possible
+                                                                if (f.previewUrl) {
+                                                                    window.open(f.previewUrl, '_blank');
+                                                                } else if (f.base64) {
+                                                                    try {
+                                                                        if ((f.mimeType || '').startsWith('text/')) {
+                                                                            // Reverse the btoa(encodeURIComponent(text)) encoding used when storing
+                                                                            const decoded = decodeURIComponent(escape(atob(f.base64)));
+                                                                            const blob = new Blob([decoded], { type: f.mimeType || 'text/plain' });
+                                                                            const url = URL.createObjectURL(blob);
+                                                                            window.open(url, '_blank');
+                                                                        } else {
+                                                                            const byteString = atob(f.base64);
+                                                                            const ia = new Uint8Array(byteString.length);
+                                                                            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+                                                                            const blob = new Blob([ia], { type: f.mimeType || 'application/octet-stream' });
+                                                                            const url = URL.createObjectURL(blob);
+                                                                            window.open(url, '_blank');
+                                                                        }
+                                                                    } catch (e) {
+                                                                        alert('Preview failed: ' + (e as any)?.message || 'unknown error');
+                                                                    }
+                                                                } else {
+                                                                    alert('Preview not available for this file.');
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm"
+                                                        >
+                                                            View
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {studyPlan.resources.map((resource, i) => (
                                     <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
                                         <div className="flex items-start justify-between mb-4">

@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide scrollbars for the pdf viewer container but allow vertical scrolling */
+.pdf-viewer-container {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+.pdf-viewer-container::-webkit-scrollbar {
+	display: none; /* Chrome, Safari */
+}
+
+/* Ensure pdf page container does not cause horizontal overflow */
+.pdf-page { 
+	display: block;
+	max-width: 100%;
+}

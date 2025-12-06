@@ -26,6 +26,21 @@ export default function Home() {
         }
     }, [location]);
 
+    // If navigated from the AISH redirect with autoRun, start the pipeline automatically
+    useEffect(() => {
+        const state: any = (location && (location as any).state) || {};
+        if (state?.autoRun && state?.url) {
+            const decoded = normalizeAishInput(state.url);
+            setUrl(decoded);
+            // Clear the navigation state so refresh doesn't re-run
+            try { navigate(location.pathname, { replace: true, state: {} }); } catch (e) { /* ignore */ }
+            // Start processing after a tick to allow state to settle
+            setTimeout(() => {
+                handleGenerate();
+            }, 50);
+        }
+    }, [location, navigate]);
+
     const fileToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -43,9 +58,80 @@ export default function Home() {
         });
     };
 
+    const inferMimeFromName = (name: string) => {
+        const ext = name.split('.').pop()?.toLowerCase() || '';
+        switch (ext) {
+            case 'pdf':
+                return 'application/pdf';
+            case 'doc':
+            case 'docx':
+                return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            case 'ppt':
+            case 'pptx':
+                return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+            case 'py':
+                return 'text/x-python';
+            case 'mp4':
+                return 'video/mp4';
+            case 'webm':
+                return 'video/webm';
+            case 'mov':
+            case 'qt':
+                return 'video/quicktime';
+            default:
+                return 'application/octet-stream';
+        }
+    };
+
+    const normalizeAishInput = (input: string) => {
+        if (!input) return input;
+        let s = input.trim();
+        // If path-style AISH/ prefix
+        if (s.toUpperCase().startsWith('AISH/')) {
+            s = s.slice(5);
+        }
+
+        // If full URL with host 'aish' like http://aish/https://...
+        try {
+            const maybeUrl = new URL(s);
+            if (maybeUrl.hostname.toLowerCase() === 'aish') {
+                let path = maybeUrl.pathname || '';
+                if (path.startsWith('/')) path = path.slice(1);
+                s = path + (maybeUrl.search || '') + (maybeUrl.hash || '');
+            }
+        } catch (e) {
+            // not a full URL, ignore
+        }
+
+        // try decode once
+        try { s = decodeURIComponent(s); } catch (e) { /* ignore */ }
+
+        // If missing scheme and begins with www., prepend https
+        if (!/^https?:\/\//i.test(s) && s.startsWith('www.')) {
+            s = 'https://' + s;
+        }
+
+        return s;
+    };
+
+    const isAishPrefixedInput = (input: string) => {
+        if (!input) return false;
+        const s = input.trim();
+        if (!s) return false;
+        if (s.toUpperCase().startsWith('AISH/')) return true;
+        if (s.toLowerCase().startsWith('aish/')) return true;
+        try {
+            const u = new URL(s);
+            if (u.hostname && u.hostname.toLowerCase() === 'aish') return true;
+        } catch (e) {
+            // not a full url
+        }
+        return false;
+    };
+
     const handleGenerate = async () => {
         if (!file && !url) {
-            setError('Please upload a PDF/Video or enter a YouTube URL');
+            setError('Please upload a supported file (PDF, DOCX, PPT, PY, Video) or enter a YouTube URL');
             return;
         }
 
@@ -58,14 +144,107 @@ export default function Home() {
             let mediaType = '';
 
             if (file) {
-                const base64 = await fileToBase64(file);
-                data = await runFullPipeline(base64, file.type);
-                mediaUrl = URL.createObjectURL(file);
-                mediaType = file.type;
+                const mimeType = file.type && file.type.length ? file.type : inferMimeFromName(file.name);
+                // If it's a text file (like .py) read as text and send raw text for better preview/processing
+                if (mimeType.startsWith('text/') || mimeType === 'text/x-python') {
+                    const textContent = await file.text();
+                    data = await runFullPipeline(textContent, mimeType);
+                    mediaUrl = URL.createObjectURL(new Blob([textContent], { type: mimeType }));
+                    mediaType = mimeType;
+                } else {
+                    const base64 = await fileToBase64(file);
+                    data = await runFullPipeline(base64, mimeType);
+                    mediaUrl = URL.createObjectURL(file);
+                    mediaType = mimeType;
+                }
+                // Persist uploaded file metadata so it's visible on the Study Dashboard
+                try {
+                    const existing = JSON.parse(localStorage.getItem('uploaded_files') || '[]');
+                    // Create a preview blob URL. If file is text and was read as text, create from that; otherwise use the file itself.
+                    let previewUrl = '';
+                    try {
+                        previewUrl = URL.createObjectURL(file);
+                    } catch (e) {
+                        previewUrl = '';
+                    }
+
+                    const entry: any = {
+                        id: Date.now(),
+                        name: file.name,
+                        mimeType,
+                        size: file.size,
+                        createdAt: new Date().toISOString(),
+                        previewUrl,
+                    };
+
+                    // Save small payloads (base64 or raw text) only for small files (< 2MB)
+                    try {
+                        if (mimeType.startsWith('text/')) {
+                            const text = await file.text();
+                            if (file.size < 2 * 1024 * 1024) entry.base64 = btoa(unescape(encodeURIComponent(text)));
+                        } else {
+                            const base64 = await fileToBase64(file);
+                            if (base64 && file.size < 2 * 1024 * 1024) entry.base64 = base64;
+                        }
+                    } catch (e) {
+                        // ignore base64/text encoding errors
+                    }
+
+                    existing.unshift(entry);
+                    localStorage.setItem('uploaded_files', JSON.stringify(existing));
+                } catch (e) {
+                    console.warn('Failed to persist uploaded file metadata', e);
+                }
             } else if (url) {
-                data = await runFullPipeline(url, 'text/plain');
-                mediaUrl = url;
-                mediaType = 'youtube';
+                // If user pasted an AISH/ prefixed value, delegate to the AISH route so it behaves the same
+                if (isAishPrefixedInput(url)) {
+                    // Navigate to the AISH route (encode the original input so path is safe)
+                    navigate(`/AISH/${encodeURIComponent(url)}`);
+                    return;
+                }
+
+                const normalized = normalizeAishInput(url);
+
+                // Try to fetch a transcript/scraped text for the YouTube URL using a public scraper (jina.ai)
+                // If a transcript is found, send the raw text to the pipeline (better summaries). If not, fall back to URL flow.
+                const fetchTranscript = async (ytUrl: string) => {
+                    try {
+                        // Attempt to construct a jina.ai scraping URL which returns extracted page text
+                        // Example: https://r.jina.ai/http://www.youtube.com/watch?v=VIDEO_ID
+                        const proxy = 'https://r.jina.ai/http://www.youtube.com/watch?v=';
+                        // Extract video id if present
+                        const vidMatch = ytUrl.match(/[?&]v=([^&]+)/);
+                        let fetchUrl = '';
+                        if (vidMatch && vidMatch[1]) {
+                            fetchUrl = proxy + vidMatch[1];
+                        } else {
+                            // try pathname form like youtu.be/ID
+                            const shortMatch = ytUrl.match(/youtu\.be\/(.+)$/);
+                            if (shortMatch && shortMatch[1]) fetchUrl = proxy + shortMatch[1];
+                        }
+                        if (!fetchUrl) return null;
+
+                        const resp = await fetch(fetchUrl);
+                        if (!resp.ok) return null;
+                        const txt = await resp.text();
+                        // Basic sanity: ensure it's reasonably long
+                        if (txt && txt.length > 200) return txt;
+                    } catch (e) {
+                        // ignore errors
+                    }
+                    return null;
+                };
+
+                const transcript = await fetchTranscript(normalized);
+                if (transcript) {
+                    data = await runFullPipeline(transcript, 'text/plain');
+                    mediaUrl = normalized;
+                    mediaType = 'youtube';
+                } else {
+                    data = await runFullPipeline(normalized, 'application/url');
+                    mediaUrl = normalized;
+                    mediaType = 'youtube';
+                }
             }
             navigate('/results', { state: { data, mediaUrl, mediaType } });
         } catch (err: any) {
@@ -148,7 +327,7 @@ export default function Home() {
                                 <input
                                     id="file-upload"
                                     type="file"
-                                    accept=".pdf,video/mp4,video/webm,video/quicktime"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.py,video/mp4,video/webm,video/quicktime"
                                     className="hidden"
                                     onChange={(e) => { setFile(e.target.files?.[0] || null); setUrl(''); setError(''); }}
                                 />
@@ -171,7 +350,7 @@ export default function Home() {
                                     <div className="flex flex-col items-center">
                                         <Upload className="w-10 h-10 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors" />
                                         <p className="font-bold text-slate-600">Upload File</p>
-                                        <p className="text-xs text-slate-400 mt-1">PDF, MP4, WebM</p>
+                                        <p className="text-xs text-slate-400 mt-1">PDF, DOCX, PPT, PY, MP4, WebM</p>
                                     </div>
                                 )}
                             </div>

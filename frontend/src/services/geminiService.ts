@@ -17,8 +17,23 @@ const summarySchema = {
             type: Type.ARRAY,
             items: { type: Type.STRING },
         },
+        detailedNotes: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    topic: { type: Type.STRING },
+                    explanation: { type: Type.STRING },
+                    examples: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                    },
+                },
+                required: ["topic", "explanation", "examples"],
+            },
+        },
     },
-    required: ["summary", "keyPoints", "factoids"],
+    required: ["summary", "keyPoints", "factoids", "detailedNotes"],
 };
 
 const studyMaterialSchema = {
@@ -92,13 +107,17 @@ export const runFullPipeline = async (
         // Stage 1: Analysis
         const analysisPrompt = `
       Analyze the provided document/video.
-      Generate a detailed summary, a list of key points, and interesting factoids.
+      Generate a structured summary with small, digestible paragraphs.
+      Include a list of key points as bullet points.
+      Include interesting factoids.
       ${context}
       
       CRITICAL INSTRUCTIONS:
-      1.  **Relevance**: Ensure all content is strictly derived from the source material.
-      2.  **Detail**: Provide detailed explanations for complex concepts.
-      3.  **Examples**: Include real-world examples where applicable to illustrate key points.
+      1.  **Format**: Use short paragraphs (max 3-4 sentences). Use bullet points for lists.
+      2.  **Relevance**: Ensure all content is strictly derived from the source material.
+      3.  **Detail**: Provide detailed explanations for complex concepts but keep them concise.
+      4.  **Examples**: Include real-world examples where applicable.
+      5.  **Detailed Notes**: For the 'detailedNotes' section, identify 3-5 major topics. For each, provide a comprehensive explanation and at least 2 concrete examples.
     `;
 
         const parts: any[] = [{ text: analysisPrompt }];
@@ -172,6 +191,7 @@ export const runFullPipeline = async (
             notes: parsedAnalysis.summary + "\n\n### Key Points\n" + parsedAnalysis.keyPoints.map((p: string) => `- ${p}`).join("\n"),
             flashcards: parsedSynthesis.flashcards,
             quiz: parsedSynthesis.quiz,
+            detailedNotes: parsedAnalysis.detailedNotes || [],
         };
 
     } catch (error) {

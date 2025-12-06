@@ -10,10 +10,17 @@ export interface QuizQuestion {
     explanation: string;
 }
 
+export interface DetailedNote {
+    topic: string;
+    explanation: string;
+    examples: string[];
+}
+
 export interface StudyData {
     notes: string;
     flashcards: Flashcard[];
     quiz: QuizQuestion[];
+    detailedNotes: DetailedNote[];
 }
 
 export interface StudyGuide {

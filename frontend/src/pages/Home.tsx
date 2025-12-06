@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { runFullPipeline } from '../services/geminiService';
-import { Loader2, Upload, FileVideo, FileText, Youtube, ArrowLeft } from 'lucide-react';
+import { Loader2, Upload, FileVideo, FileText, Youtube, ArrowLeft, GraduationCap, ArrowRight } from 'lucide-react';
 
 export default function Home() {
     const [url, setUrl] = useState('');
@@ -93,13 +93,7 @@ export default function Home() {
 
                 {/* Text Section */}
                 <div className="text-white md:w-1/2 space-y-6 text-center md:text-left">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium text-blue-100">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                        </span>
-                        Powered by Gemini 2.0 Flash
-                    </div>
+
                     <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight">
                         Master Any <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Subject</span> Instantly
@@ -207,9 +201,31 @@ export default function Home() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Study Portal Card */}
+                    <div
+                        onClick={() => navigate('/study-setup')}
+                        className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-3xl shadow-xl border border-white/20 cursor-pointer group hover:scale-[1.02] transition-all relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div className="relative z-10 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
+                                    <GraduationCap className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Study Portal</h3>
+                                    <p className="text-indigo-100 text-sm">Get a personalized AI study plan</p>
+                                </div>
+                            </div>
+                            <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                                <ArrowRight className="w-5 h-5 text-white" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     );
 }
-

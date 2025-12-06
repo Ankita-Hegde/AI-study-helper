@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Results from './pages/Results';
+import StudySetup from './pages/StudySetup';
+import StudyDashboard from './pages/StudyDashboard';
 
 function App() {
     return (
@@ -9,6 +11,8 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/results" element={<Results />} />
+                    <Route path="/study-setup" element={<StudySetup />} />
+                    <Route path="/study-dashboard" element={<StudyDashboard />} />
                 </Routes>
             </div>
         </Router>

@@ -1,6 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { StudyData, QuizQuestion, StudyGuide } from "../types";
 
+// Study Portal Types
+export interface StudyPlan {
+    topic: string;
+    level: string;
+    roadmap: { week: number; title: string; description: string; keyConcepts: string[] }[];
+    resources: { title: string; type: string; url?: string; description: string }[];
+}
+
+
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genai = new GoogleGenAI({ apiKey });
 
@@ -77,6 +86,45 @@ const studyGuideSchema = {
     },
     required: ["guide"],
 };
+
+const studyPlanSchema = {
+    type: Type.OBJECT,
+    properties: {
+        topic: { type: Type.STRING },
+        level: { type: Type.STRING },
+        roadmap: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    week: { type: Type.INTEGER },
+                    title: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    keyConcepts: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING }
+                    }
+                },
+                required: ["week", "title", "description", "keyConcepts"]
+            }
+        },
+        resources: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING },
+                    type: { type: Type.STRING },
+                    url: { type: Type.STRING },
+                    description: { type: Type.STRING }
+                },
+                required: ["title", "type", "description"]
+            }
+        }
+    },
+    required: ["topic", "level", "roadmap", "resources"]
+};
+
 
 const fetchVideoMetadata = async (url: string) => {
     try {
@@ -270,6 +318,49 @@ export const chatWithAI = async (context: string, history: { role: string, text:
 
     } catch (error) {
         console.error("Chat Error:", error);
+        throw error;
+    }
+};
+
+export const generateStudyPlan = async (area: string, topic: string, level: string): Promise<StudyPlan> => {
+    try {
+        const prompt = `
+            Create a comprehensive study plan for a student at the "${level}" level who wants to learn about "${topic}" (Area: ${area}).
+            
+            The plan should include:
+            1. A 4-week Roadmap (Week number, Title, Description, Key Concepts).
+            2. Recommended Resources (Books, Articles, or general search terms).
+
+            Output JSON format:
+            {
+                "topic": "${topic}",
+                "level": "${level}",
+                "roadmap": [
+                    { "week": 1, "title": "string", "description": "string", "keyConcepts": ["string"] }
+                ],
+                "resources": [
+                    { "title": "string", "type": "Book/Video/Article", "url": "optional string", "description": "string" }
+                ]
+            }
+        `;
+
+        const response = await genai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: studyPlanSchema
+            },
+        });
+
+        const data = response.text;
+        console.log("Gemini Raw Response:", data);
+
+        if (!data) throw new Error("No study plan generated");
+        return JSON.parse(data);
+
+    } catch (error) {
+        console.error("Study Plan Error:", error);
         throw error;
     }
 };
